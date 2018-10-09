@@ -4,6 +4,8 @@ Stein is a super simple robot framework to automate the tasks that I do not like
 doing. 'Stein, get it? Like Franken-stein? Hah, ok nvm. You write 'robots' and
 execute them within the Stein framework.
 
+The goal is to create robots with a readable set of instructions / code.
+
 At the moment, I'm automating my tasks with following platforms:
 
 * ClientExec
