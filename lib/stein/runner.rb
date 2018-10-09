@@ -6,11 +6,13 @@ module Stein
     include Singleton
 
     def initialize
-      puts 'Stein::Runner initialized'
+    end
+
+    def self.descendants
+      ObjectSpace.each_object(Class).select { |klass| klass < self }
     end
 
     def exec
-
     end
   end
 end

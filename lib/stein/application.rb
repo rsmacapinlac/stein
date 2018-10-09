@@ -11,7 +11,7 @@ module Stein
     include Singleton
 
     def initialize
-      puts 'initializing'
+      # maybe dynamically load libraries?
     end
   end
 end

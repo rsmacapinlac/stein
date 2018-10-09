@@ -8,5 +8,3 @@ class Stuff < Stein::Runner
   end
 end
 
-Stuff.instance.exec
-
