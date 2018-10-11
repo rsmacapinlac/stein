@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'bundler/setup'
-require './lib/stein'
+require 'stein'
 require 'optparse'
 
 # stein.rb --robot=boogienet-infinitewp.rb
