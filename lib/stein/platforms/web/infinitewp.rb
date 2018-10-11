@@ -32,7 +32,6 @@ module Stein
             update_all.click
             confirm = browser.link(visible_text: 'Yes! Go ahead.')
             if (confirm.exists?)
-              sleep(60)
               confirm.click
               self.reload_data
             end
@@ -40,12 +39,13 @@ module Stein
         end
 
         def reload_data
-          last_reload_time = @_browser.b.div(id: 'lastReloadTime').text.to_s
-          sleep(60)
+          # wait until the btn_reload is visible again
+          # last_reload_time = @_browser.b.div(id: 'lastReloadTime').text.to_s
           @_browser.b.div(id: 'clearPluginCache').click
           @_browser.b.link(id: 'reloadStats').click
+          sleep(10)
           @_browser.b.wait_until { |b|
-            b.div(id: 'lastReloadTime').text.to_s != last_reload_time
+            b.div(class: 'btn_reload').present?
           }
         end
 
