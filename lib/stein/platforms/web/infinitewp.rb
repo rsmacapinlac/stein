@@ -25,10 +25,15 @@ module Stein
           @_browser.b.goto "#{@_infinitewp_url}/login.php?logout=now"
         end
 
+        def has_updates?
+          update_all = browser.link(visible_text: 'Update All Sites')
+          return update_all.exists?
+        end
+
         def update_all_sites
           browser = @_browser.b
           update_all = browser.link(visible_text: 'Update All Sites')
-          if (update_all.exists?)
+          if (self.has_updates?)
             update_all.click
             confirm = browser.link(visible_text: 'Yes! Go ahead.')
             if (confirm.exists?)
