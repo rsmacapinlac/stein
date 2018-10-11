@@ -26,6 +26,7 @@ module Stein
         end
 
         def has_updates?
+          browser = @_browser.b
           update_all = browser.link(visible_text: 'Update All Sites')
           return update_all.exists?
         end
