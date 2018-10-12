@@ -8,7 +8,10 @@ module Stein
         attr_accessor :b
 
         def initialize
-          @b = Watir::Browser.new :firefox
+          client = Selenium::WebDriver::Remote::Http::Default.new
+          client.read_timeout = 600 # seconds – default is 60
+
+          @b = Watir::Browser.new :firefox, http_client: client
         end
 
         def close

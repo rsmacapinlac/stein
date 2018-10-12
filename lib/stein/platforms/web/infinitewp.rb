@@ -8,6 +8,8 @@ module Stein
         attr_accessor :_infinitewp_url
 
         def initialize(infinitewp_url, browser=nil)
+          # set time out for 10m
+          Watir.default_timeout = 1200
           @_infinitewp_url = infinitewp_url
 
           @_browser = browser
@@ -29,6 +31,33 @@ module Stein
           browser = @_browser.b
           update_all = browser.link(visible_text: 'Update All Sites')
           return update_all.exists?
+        end
+
+        def copy_live_to_staging(site)
+          browser = @_browser.b
+          site = browser.link(visible_text: site)
+          site.hover
+          copy_live_to_staging = browser.link(visible_text: 'Copy live to staging')
+          copy_live_to_staging.click
+          are_you_sure = browser.link(visible_text: 'Copy')
+          if are_you_sure.present?
+            are_you_sure.click
+
+            browser.link(visible_text: 'Activity Log').click
+
+            browser.wait_until { |b|
+              b.div(class: 'history').present?
+            }
+
+            keep_checking = true
+            while keep_checking == true do
+              sleep(5)
+              browser.span(class: 'refreshData').click
+              keep_checking = browser.div(class: 'ind_row_cont').
+                div(class: 'in_progress').
+                exists?
+            end
+          end
         end
 
         def update_all_sites
