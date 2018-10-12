@@ -33,6 +33,40 @@ module Stein
           return update_all.exists?
         end
 
+        def monitor_activity_log
+          browser = @_browser.b
+          browser.link(visible_text: 'Activity Log').click
+
+          browser.wait_until { |b|
+            b.div(class: 'history').present?
+          }
+
+          keep_checking = true
+          while keep_checking == true do
+            sleep(10)
+            browser.span(class: 'refreshData').click
+            keep_checking = browser.div(class: 'ind_row_cont').
+              div(class: 'in_progress').
+              exists?
+          end
+        end
+
+        def create_backup(site, backup_name)
+          browser = @_browser.b
+          site = browser.link(visible_text: site)
+          site.hover
+          backup_now = browser.link(visible_text: 'Backup Now')
+          backup_now.click
+
+          backup_dialog = browser.div(class_name: ['dialog_cont', 'create_backup'])
+          if backup_dialog.present?
+            browser.text_field(id: 'backupName').set backup_name
+            browser.link(visible_text: 'Backup Now').click
+
+            self.monitor_activity_log
+          end
+        end
+
         def copy_live_to_staging(site)
           browser = @_browser.b
           site = browser.link(visible_text: site)
@@ -43,20 +77,7 @@ module Stein
           if are_you_sure.present?
             are_you_sure.click
 
-            browser.link(visible_text: 'Activity Log').click
-
-            browser.wait_until { |b|
-              b.div(class: 'history').present?
-            }
-
-            keep_checking = true
-            while keep_checking == true do
-              sleep(5)
-              browser.span(class: 'refreshData').click
-              keep_checking = browser.div(class: 'ind_row_cont').
-                div(class: 'in_progress').
-                exists?
-            end
+            self.monitor_activity_log
           end
         end
 
