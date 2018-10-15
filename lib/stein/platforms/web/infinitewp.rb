@@ -55,16 +55,45 @@ module Stein
           browser = @_browser.b
           site = browser.link(visible_text: site)
           site.hover
+          sleep(3)
           backup_now = browser.link(visible_text: 'Backup Now')
           backup_now.click
 
           backup_dialog = browser.div(class_name: ['dialog_cont', 'create_backup'])
           if backup_dialog.present?
             browser.text_field(id: 'backupName').set backup_name
+            browser.link(class: 'phoenix_backup').click
             browser.link(visible_text: 'Backup Now').click
-
             self.monitor_activity_log
           end
+        end
+
+        def download_backup(site)
+          browser = @_browser.b
+          browser.send_keys :escape
+
+          site = browser.link(visible_text: site)
+
+          view_backups = browser.link(visible_text: 'View Backups')
+          until view_backups.present?
+            site.hover
+            sleep(1)
+          end
+
+          view_backups.click
+          (browser.divs(class: 'item_ind')[0]).link(class: 'download').click
+          dl_parts_title = browser.div(class: 'dialog_cont').
+            div(class: 'title', visible_text: 'DOWNLOAD BACKUP PART FILES')
+          if dl_parts_title.present?
+            for link in browser.links(class: 'part_download')
+              unless link.href.include? "tmp"
+                link.click
+              end
+            end
+            browser.link(visible_text: 'cancel')
+          end
+          browser.send_keys :escape
+          sleep(3)
         end
 
         def copy_live_to_staging(site)

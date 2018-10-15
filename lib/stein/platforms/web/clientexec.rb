@@ -20,6 +20,37 @@ module Stein
           @_browser.b.text_field(name:'passed_password').set password
           @_browser.b.button(text:'Sign In').click
         end
+
+        def send_new_invoices
+
+          browser = @_browser.b
+          browser.goto "#{@_clientexec_url}/admin/index.php?fuse=billing&controller=invoice&view=invoices&filter=1"
+          for tr in browser.div(id: 'invoicelist-grid').table.tbody.trs
+            correct_row = false
+            for td in tr.tds
+              # is this the right column? and if it is, has the invoice been
+              # sent?
+              if td.attribute_value('dataindex') == 'billstatus'
+                if td.text == 'not sent'
+                  correct_row = true
+                end
+              end
+            end
+
+            # if the robot finds an invoice that has not been sent, then click
+            # the checkbox
+            if correct_row == true
+              tr.td(class: 'checkbox').click
+            end
+          end
+
+          send_invoice = browser.link(visible_text: 'Send Invoice')
+          if send_invoice.present?
+            send_invoice.click
+          end
+
+        end
+
         def logout
           @_browser.b.link(class: 'user-avatar-link').click
           @_browser.b.link(visible_text: 'Logout').click
