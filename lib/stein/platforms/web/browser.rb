@@ -23,6 +23,9 @@ module Stein
             http_client: client,
             profile: profile
         end
+        def resize_to(w, h)
+          @b.window.resize_to(w, h)
+        end
 
         def close
           @b.close

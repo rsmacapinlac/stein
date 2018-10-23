@@ -33,6 +33,49 @@ module Stein
           return update_all.exists?
         end
 
+        def malware_scan(site)
+          browser = @_browser.b
+          self.select_site(site)
+        end
+
+        def hide_sites_menu
+          browser = @_browser.b
+          browser.div(class: 'showFooterSelector').click
+          sites_menu = browser.div(id: 'bottom_sites_cont')
+          if sites_menu.present?
+            browser.div(class: 'showFooterSelector').click
+          end
+        end
+
+        def wordfence_scan
+          browser = @_browser.b
+          self.hide_sites_menu
+          browser.link(visible_text: 'Protect').hover
+          wordfence = browser.link(visible_text: 'Wordfence')
+          if wordfence.present?
+            wordfence.click
+            browser.div(id: 'logo').hover
+            browser.wait_until { |b|
+              b.div(class: 'page_section_title', visible_text: 'WORDFENCE').
+                present?
+            }
+            browser.link(visible_text: 'All Websites').click
+            browser.link(visible_text: 'Scan Now').click
+            self.monitor_activity_log
+          end
+        end
+
+        def select_site(site)
+          browser = @_browser.b
+          site = browser.link(visible_text: site)
+          site.hover
+          sleep(3)
+        end
+
+        def monitor_activity_log_for(something)
+
+        end
+
         def monitor_activity_log
           browser = @_browser.b
           browser.link(visible_text: 'Activity Log').click
@@ -51,49 +94,61 @@ module Stein
           end
         end
 
-        def create_backup(site, backup_name)
+        def open_backup
           browser = @_browser.b
-          site = browser.link(visible_text: site)
-          site.hover
-          sleep(3)
-          backup_now = browser.link(visible_text: 'Backup Now')
-          backup_now.click
-
-          backup_dialog = browser.div(class_name: ['dialog_cont', 'create_backup'])
-          if backup_dialog.present?
-            browser.text_field(id: 'backupName').set backup_name
-            browser.link(class: 'phoenix_backup').click
-            browser.link(visible_text: 'Backup Now').click
-            self.monitor_activity_log
-          end
+          self.hide_sites_menu
+          browser.link(visible_text: 'Protect').hover
+          browser.link(visible_text: 'Backups').click
+          browser.wait_until { |b|
+            b.div(id: 'backupPageMainCont').present?
+          }
         end
 
-        def download_backup(site)
+        def create_backup(site, backup_name)
+          self.open_backup
+
           browser = @_browser.b
-          browser.send_keys :escape
+          browser.link(visible_text: 'Create New Backup').click
+          browser.wait_until { |b|
+            b.div(id: 'modalDiv').present?
+          }
 
-          site = browser.link(visible_text: site)
+          browser.div(id: 'modalDiv').link(visible_text: site).click
+          browser.div(id: 'enterBackupDetails').click
+          browser.wait_until { |b|
+            b.div(id: 'modalDiv').div(visible_text: 'CREATE A NEW BACKUP').present?
+          }
+          browser.text_field(id: 'backupName').set backup_name
+          browser.link(visible_text: 'Phoenix (Beta)').click
+          browser.link(visible_text: 'Backup Now').click
+        end
 
-          view_backups = browser.link(visible_text: 'View Backups')
-          until view_backups.present?
-            site.hover
-            sleep(1)
-          end
+        def download_backup(site, backup_name)
+          self.open_backup
 
-          view_backups.click
-          (browser.divs(class: 'item_ind')[0]).link(class: 'download').click
-          dl_parts_title = browser.div(class: 'dialog_cont').
-            div(class: 'title', visible_text: 'DOWNLOAD BACKUP PART FILES')
-          if dl_parts_title.present?
-            for link in browser.links(class: 'part_download')
-              unless link.href.include? "tmp"
-                link.click
-              end
+          browser = @_browser.b
+          browser.text_field(class: ['input_type_filter', 'searchItems']).set site
+          row = browser.div(id: 'backupList').
+            div(class: 'row_name', visible_text: site)
+          row.click
+
+          row_detailed = row.parent.parent.div(text: "#{backup_name}")
+          #puts row_detailed.parent.html
+          row_detailed.parent.link(class: 'multiple_downloads').click
+
+          browser.wait_until { |b|
+            b.div(class: 'dialog_cont').
+              div(visible_text: 'DOWNLOAD BACKUP PART FILES').present?
+          }
+
+          for link in browser.links(class: 'part_download')
+            unless link.href.include? "tmp"
+              link.click
             end
-            browser.link(visible_text: 'cancel')
           end
+
           browser.send_keys :escape
-          sleep(3)
+
         end
 
         def copy_live_to_staging(site)
