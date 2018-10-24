@@ -78,9 +78,40 @@ module Stein
           self.remove_notifications
         end
 
+        def has_updates?
+          browser = @_browser.b
+          browser.div(id: 'siteViewUpdateContent').
+            div(class: 'rows_cont').present?
+        end
+
+        def which_sites_have_updates
+          browser = @_browser.b
+          sites = []
+          for row in browser.div(id: 'siteViewUpdateContent').
+            div(class: 'rows_cont').divs(class: 'ind_row_cont')
+            sites << row.div(class: 'row_name').text
+          end
+          return sites
+        end
+
         def select_site(site)
           browser = @_browser.b
           browser.div(id: 'bottom_sites_cont').link(visible_text: site).hover
+        end
+
+        def update_all_in_staging(site)
+          browser = @_browser.b
+          browser.goto @_infinitewp_url
+          row = browser.div(id: 'siteViewUpdateContent').
+            div(class: 'row_name',
+                visible_text: site).parent
+
+          row.link(visible_text: 'Update All in Staging').click
+          browser.wait_until { |b|
+            b.div(class: 'dialog_cont').present?
+          }
+          browser.link(id: 'groupUpdateInNewStage').click
+          self.monitor_activity_log
         end
 
         def copy_live_to_stage(site)
@@ -97,7 +128,6 @@ module Stein
 
           self.monitor_activity_log
           self.remove_notifications
-
         end
 
         def monitor_activity_log_for(something)
@@ -115,9 +145,11 @@ module Stein
           while keep_checking == true do
             sleep(10)
             browser.span(class: 'refreshData').click
-            keep_checking = browser.div(class: 'ind_row_cont').
-              div(class: 'in_progress').
-              exists?
+            in_progress_divs = browser.div(id: 'historyPageContent').
+              divs(class: 'in_progress')
+            in_progress_divs.count
+            keep_checking = in_progress_divs.count != 0
+            # puts "keep_checking: #{keep_checking} in_progress_divs: #{in_progress_divs.count}"
           end
         end
 
