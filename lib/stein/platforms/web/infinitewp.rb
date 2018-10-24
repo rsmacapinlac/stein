@@ -87,9 +87,14 @@ module Stein
         def which_sites_have_updates
           browser = @_browser.b
           sites = []
-          for row in browser.div(id: 'siteViewUpdateContent').
-            div(class: 'rows_cont').divs(class: 'ind_row_cont')
-            sites << row.div(class: 'row_name').text
+          is_empty = browser.div(id: 'siteViewUpdateContent').
+            div(class: 'empty_data_set').
+            present?
+          if is_empty == false
+            for row in browser.div(id: 'siteViewUpdateContent').
+              div(class: 'rows_cont').divs(class: 'ind_row_cont')
+              sites << row.div(class: 'row_name').text
+            end
           end
           return sites
         end
