@@ -54,6 +54,7 @@ module Stein
         end
 
         def remove_notifications
+          browser = @_browser.b
           for notification in browser.divs(class: 'notification')
             notification.div(class: 'n_close').click
           end
