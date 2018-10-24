@@ -33,11 +33,6 @@ module Stein
           return update_all.exists?
         end
 
-        def malware_scan(site)
-          browser = @_browser.b
-          self.select_site(site)
-        end
-
         def hide_sites_menu
           browser = @_browser.b
           browser.div(class: 'showFooterSelector').click
@@ -47,22 +42,31 @@ module Stein
           end
         end
 
-        def wordfence_scan
+        def open_site_selector(main_menu_item, sub_menu_item)
           browser = @_browser.b
           self.hide_sites_menu
-          browser.link(visible_text: 'Protect').hover
-          wordfence = browser.link(visible_text: 'Wordfence')
-          if wordfence.present?
-            wordfence.click
-            browser.div(id: 'logo').hover
-            browser.wait_until { |b|
-              b.div(class: 'page_section_title', visible_text: 'WORDFENCE').
-                present?
-            }
-            browser.link(visible_text: 'All Websites').click
-            browser.link(visible_text: 'Scan Now').click
-            self.monitor_activity_log
-          end
+          browser.link(visible_text: main_menu_item).hover
+          browser.link(visible_text: sub_menu_item).click
+
+          browser.wait_until { |b|
+            b.div(class: 'siteSelectorContainer').present?
+          }
+        end
+
+        def malware_scan(site)
+          browser = @_browser.b
+          self.open_site_selector('Protect', 'Malware Scan')
+
+          browser.div(class: 'bywebsites').link(visible_text: site).click
+          browser.link(id: 'scanSucuri').click
+        end
+
+        def wordfence_scan(site)
+          browser = @_browser.b
+          self.open_site_selector('Protect', 'Wordfence')
+
+          browser.div(class: 'bywebsites').link(visible_text: site).click
+          browser.link(id: 'scanWordfence').click
         end
 
         def select_site(site)
@@ -73,7 +77,6 @@ module Stein
         end
 
         def monitor_activity_log_for(something)
-
         end
 
         def monitor_activity_log
