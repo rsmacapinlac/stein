@@ -108,7 +108,6 @@ module Stein
           site = browser.div(id: 'siteViewUpdateContent').
                     div(class: 'row_name',
                     visible_text: site)
-          puts site.present?
           if site.present?
             row = site.parent
             row.link(class: 'update_all_group').click
