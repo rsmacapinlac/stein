@@ -53,6 +53,12 @@ module Stein
           }
         end
 
+        def remove_notifications
+          for notification in browser.divs(class: 'notification')
+            notification.div(class: 'n_close').click
+          end
+        end
+
         def malware_scan(site)
           browser = @_browser.b
           self.open_site_selector('Protect', 'Malware Scan')
@@ -67,13 +73,30 @@ module Stein
 
           browser.div(class: 'bywebsites').link(visible_text: site).click
           browser.link(id: 'scanWordfence').click
+          self.monitor_activity_log
+          self.remove_notifications
         end
 
         def select_site(site)
           browser = @_browser.b
-          site = browser.link(visible_text: site)
-          site.hover
-          sleep(3)
+          browser.div(id: 'bottom_sites_cont').link(visible_text: site).hover
+        end
+
+        def copy_live_to_stage(site)
+          self.select_site(site)
+          browser = @_browser.b
+          browser.wait_until { |b|
+            b.div(id: 'bottomToolbarOptions').present?
+          }
+          browser.link(visible_text: 'Copy live to staging').click
+          browser.wait_until { |b|
+            b.div(class: 'dialog_cont').present?
+          }
+          browser.link(id: 'confirm_staging').click
+
+          self.monitor_activity_log
+          self.remove_notifications
+
         end
 
         def monitor_activity_log_for(something)
