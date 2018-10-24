@@ -102,14 +102,22 @@ module Stein
         def update_all_by_site(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
-          row = browser.div(id: 'siteViewUpdateContent').
-            div(class: 'row_name',
-                visible_text: site).parent
-          row.link(class: 'update_all_group').click
           browser.wait_until { |b|
-            b.div(class: 'dialog_cont').present?
+            b.div(id: 'siteViewUpdateContent').present?
           }
-          browser.link(visible_text: 'Yes! Go ahead.').click
+          site = browser.div(id: 'siteViewUpdateContent').
+                    div(class: 'row_name',
+                    visible_text: site)
+          puts site.present?
+          if site.present?
+            row = site.parent
+            row.link(class: 'update_all_group').click
+            browser.wait_until { |b|
+              b.div(class: 'dialog_cont').present?
+            }
+            browser.link(visible_text: 'Yes! Go ahead.').click
+            self.monitor_activity_log
+          end
         end
 
         def update_all_in_staging(site)

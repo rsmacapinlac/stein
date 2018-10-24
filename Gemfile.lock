@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    stein (0.1.12)
+    stein (0.1.14)
       watir
       watir-scroll
       webdrivers
