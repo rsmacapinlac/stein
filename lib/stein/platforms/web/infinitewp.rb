@@ -99,6 +99,19 @@ module Stein
           browser.div(id: 'bottom_sites_cont').link(visible_text: site).hover
         end
 
+        def update_all_by_site(site)
+          browser = @_browser.b
+          browser.goto @_infinitewp_url
+          row = browser.div(id: 'siteViewUpdateContent').
+            div(class: 'row_name',
+                visible_text: site).parent
+          row.link(class: 'update_all_group').click
+          browser.wait_until { |b|
+            b.div(class: 'dialog_cont').present?
+          }
+          browser.link(visible_text: 'Yes! Go ahead.').click
+        end
+
         def update_all_in_staging(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
