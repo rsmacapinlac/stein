@@ -7,7 +7,7 @@ module Stein
       class Browser
         attr_accessor :b
 
-        def initialize
+        def initialize(is_headless = true)
           download_directory = "#{Dir.pwd}/Downloads"
           download_directory.tr!('/', '\\') if Selenium::WebDriver::Platform.windows?
 
@@ -21,7 +21,9 @@ module Stein
 
           @b = Watir::Browser.new :firefox,
             http_client: client,
-            profile: profile
+            profile: profile,
+            headless: true
+
         end
         def resize_to(w, h)
           @b.window.resize_to(w, h)
