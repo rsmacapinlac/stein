@@ -152,7 +152,9 @@ module Stein
           browser.div(class: 'dialog_cont').wait_until_present
           browser.link(id: 'groupUpdateInNewStage').click
           logger.info "Update all in staging for #{site}"
+
           self.monitor_activity_log
+          self.remove_notifications
         end
 
         def monitor_activity_log
@@ -170,7 +172,7 @@ module Stein
             in_progress_divs.count
             keep_checking = in_progress_divs.count != 0
             logger.debug "Will continue to check? #{keep_checking}  #{in_progress_divs.count}"
-            logger.debug "Log items in progress #{in_progress_divs.count}"
+            logger.info "Log items in progress #{in_progress_divs.count}"
             sleep(10)
           end
           logger.info "Activities in activity log are all completed"
