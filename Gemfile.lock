@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     stein (0.1.17)
+      dotenv
       watir
       watir-scroll
       webdrivers
@@ -66,7 +67,6 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.16)
-  dotenv
   rake (~> 10.0)
   rspec (~> 3.0)
   rubocop

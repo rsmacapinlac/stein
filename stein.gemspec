@@ -26,8 +26,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'watir'
   spec.add_dependency 'watir-scroll'
   spec.add_dependency 'webdrivers'
+  spec.add_dependency "dotenv"
 
-  spec.add_development_dependency "dotenv"
   spec.add_development_dependency "rubocop"
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"

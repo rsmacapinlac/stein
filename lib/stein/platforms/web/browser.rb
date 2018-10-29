@@ -1,5 +1,6 @@
 require 'watir'
 require 'webdrivers'
+require 'dotenv'
 
 module Stein
   module Platforms
@@ -8,6 +9,8 @@ module Stein
         attr_accessor :b
 
         def initialize(is_headless = true)
+          Dotenv.load
+
           download_directory = "#{Dir.pwd}/Downloads"
           download_directory.tr!('/', '\\') if Selenium::WebDriver::Platform.windows?
 
@@ -19,10 +22,14 @@ module Stein
           client = Selenium::WebDriver::Remote::Http::Default.new
           client.read_timeout = 600 # seconds – default is 60
 
+          @is_headless = is_headless
+          @is_headless = (ENV['RUN_HEADLESS'].downcase == 'true') unless ENV['RUN_HEADLESS'].nil?
+          # puts "is_headless: #{@is_headless}"
+
           @b = Watir::Browser.new :firefox,
             http_client: client,
             profile: profile,
-            headless: true
+            headless: @is_headless
 
         end
         def resize_to(w, h)
