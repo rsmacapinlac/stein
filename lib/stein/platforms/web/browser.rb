@@ -1,11 +1,12 @@
 require 'watir'
 require 'webdrivers'
 require 'dotenv'
+require 'stein/platforms/web/web_automator'
 
 module Stein
   module Platforms
     module Web
-      class Browser
+      class Browser < WebAutomator
         attr_accessor :b
 
         def initialize(is_headless = true)
@@ -31,13 +32,17 @@ module Stein
             profile: profile,
             headless: @is_headless
 
+          logger.debug "Initialized #{@b}, headless: #{@is_headless}"
+
         end
+
         def resize_to(w, h)
           @b.window.resize_to(w, h)
         end
 
         def close
           @b.close
+          logger.debug "#{@b} closed"
         end
       end
     end

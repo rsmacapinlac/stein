@@ -1,8 +1,9 @@
+require 'stein/platforms/web/web_automator'
 
 module Stein
   module Platforms
     module Web
-      class InfiniteWP
+      class InfiniteWP < WebAutomator
 
         attr_accessor :_browser
         attr_accessor :_infinitewp_url
@@ -14,17 +15,22 @@ module Stein
 
           @_browser = browser
           @_browser = Stein::Platforms::Web::Browser.new if @_browser == nil
+          logger.debug "Initialized browser #{@_browser}"
         end
 
         def login(login, password)
-          @_browser.b.goto "#{@_infinitewp_url}/login.php"
+          infinite_url_login = "#{@_infinitewp_url}/login.php"
+          @_browser.b.goto infinite_url_login
+          logger.info "Opened InfiniteWP at #{infinite_url_login}"
           @_browser.b.text_field(name:'email').set login
           @_browser.b.text_field(name:'password').set password
           @_browser.b.button(text:'Log in').click
+          logger.info "Logged in with #{login}"
         end
 
         def logout
           @_browser.b.goto "#{@_infinitewp_url}/login.php?logout=now"
+          logger.info "Logged out"
         end
 
         def has_updates?
@@ -37,26 +43,29 @@ module Stein
           browser = @_browser.b
           browser.div(class: 'showFooterSelector').click
           sites_menu = browser.div(id: 'bottom_sites_cont')
-          if sites_menu.present?
+          sites_menu_found = sites_menu.present?
+          logger.debug "Sites menu was found? #{sites_menu_found}"
+          if sites_menu_found == true
             browser.div(class: 'showFooterSelector').click
+            logger.info "Sites menu was clicked to hide"
           end
         end
 
-        def open_site_selector(main_menu_item, sub_menu_item)
+        def open_site_selector(main_menu_item, sub_menu_item,
+                               confirm_element = { class: 'siteSelectorContainer' })
           browser = @_browser.b
           self.hide_sites_menu
           browser.link(visible_text: main_menu_item).hover
           browser.link(visible_text: sub_menu_item).click
-
-          browser.wait_until { |b|
-            b.div(class: 'siteSelectorContainer').present?
-          }
+          browser.div(confirm_element).wait_until_present
+          logger.debug "#{confirm_element} found"
         end
 
         def remove_notifications
           browser = @_browser.b
           for notification in browser.divs(class: 'notification')
             notification.div(class: 'n_close').click
+            logger.debug "Removed notification #{notification}"
           end
         end
 
@@ -66,6 +75,9 @@ module Stein
 
           browser.div(class: 'bywebsites').link(visible_text: site).click
           browser.link(id: 'scanSucuri').click
+          logger.info "Start malware (sucuri) scan (#{site})"
+
+          self.monitor_activity_log
         end
 
         def wordfence_scan(site)
@@ -74,6 +86,8 @@ module Stein
 
           browser.div(class: 'bywebsites').link(visible_text: site).click
           browser.link(id: 'scanWordfence').click
+          logger.info "Start wordfence scan (#{site})"
+
           self.monitor_activity_log
           self.remove_notifications
         end
@@ -87,15 +101,20 @@ module Stein
         def which_sites_have_updates
           browser = @_browser.b
           sites = []
+          browser.goto @_infinitewp_url
           is_empty = browser.div(id: 'siteViewUpdateContent').
             div(class: 'empty_data_set').
             present?
-          if is_empty == false
+          logger.debug "Are there sites that require updates? #{is_empty}"
+          if is_empty != false
             for row in browser.div(id: 'siteViewUpdateContent').
               div(class: 'rows_cont').divs(class: 'ind_row_cont')
-              sites << row.div(class: 'row_name').text
+              site = row.div(class: 'row_name').text
+              sites << site
+              logger.info "Added #{site} to list of sites that require updates"
             end
           end
+
           return sites
         end
 
@@ -107,19 +126,15 @@ module Stein
         def update_all_by_site(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
-          browser.wait_until { |b|
-            b.div(id: 'siteViewUpdateContent').present?
-          }
           site = browser.div(id: 'siteViewUpdateContent').
                     div(class: 'row_name',
                     visible_text: site)
           if site.present?
             row = site.parent
             row.link(class: 'update_all_group').click
-            browser.wait_until { |b|
-              b.div(class: 'dialog_cont').present?
-            }
+            browser.div(class: 'dialog_cont').wait_until_present
             browser.link(visible_text: 'Yes! Go ahead.').click
+            logger.info "Started Update All (#{site})"
             self.monitor_activity_log
           end
         end
@@ -130,81 +145,57 @@ module Stein
           row = browser.div(id: 'siteViewUpdateContent').
             div(class: 'row_name',
                 visible_text: site).parent
+          logger.debug "Found update row (#{site})"
 
           row.link(visible_text: 'Update All in Staging').click
-          browser.wait_until { |b|
-            b.div(class: 'dialog_cont').present?
-          }
+          browser.div(class: 'dialog_cont').wait_until_present
           browser.link(id: 'groupUpdateInNewStage').click
+          logger.info "Update all in staging for #{site}"
           self.monitor_activity_log
-        end
-
-        def copy_live_to_stage(site)
-          self.select_site(site)
-          browser = @_browser.b
-          browser.wait_until { |b|
-            b.div(id: 'bottomToolbarOptions').present?
-          }
-          browser.link(visible_text: 'Copy live to staging').click
-          browser.wait_until { |b|
-            b.div(class: 'dialog_cont').present?
-          }
-          browser.link(id: 'confirm_staging').click
-
-          self.monitor_activity_log
-          self.remove_notifications
-        end
-
-        def monitor_activity_log_for(something)
         end
 
         def monitor_activity_log
+          logger.debug "Monitoring activity log"
           browser = @_browser.b
           browser.link(visible_text: 'Activity Log').click
 
-          browser.wait_until { |b|
-            b.div(class: 'history').present?
-          }
+          browser.div(class: 'history').wait_until_present
 
           keep_checking = true
           while keep_checking == true do
-            sleep(10)
             browser.span(class: 'refreshData').click
             in_progress_divs = browser.div(id: 'historyPageContent').
               divs(class: 'in_progress')
             in_progress_divs.count
             keep_checking = in_progress_divs.count != 0
-            # puts "keep_checking: #{keep_checking} in_progress_divs: #{in_progress_divs.count}"
+            logger.debug "Will continue to check? #{keep_checking}  #{in_progress_divs.count}"
+            logger.debug "Log items in progress #{in_progress_divs.count}"
+            sleep(10)
           end
+          logger.info "Activities in activity log are all completed"
         end
 
-        def open_backup
-          browser = @_browser.b
-          self.hide_sites_menu
-          browser.link(visible_text: 'Protect').hover
-          browser.link(visible_text: 'Backups').click
-          browser.wait_until { |b|
-            b.div(id: 'backupPageMainCont').present?
-          }
-        end
-
-        def create_backup(site, backup_name)
-          self.open_backup
+        def create_backup(site, backup_name, backup_type = 'Phoenix (Beta)')
+          self.open_site_selector('Protect', 'Backups', {id: 'backupPageMainCont'})
 
           browser = @_browser.b
           browser.link(visible_text: 'Create New Backup').click
-          browser.wait_until { |b|
-            b.div(id: 'modalDiv').present?
-          }
+          browser.div(id: 'modalDiv').wait_until_present
+          logger.debug 'Backup modal window open'
 
           browser.div(id: 'modalDiv').link(visible_text: site).click
           browser.div(id: 'enterBackupDetails').click
-          browser.wait_until { |b|
-            b.div(id: 'modalDiv').div(visible_text: 'CREATE A NEW BACKUP').present?
-          }
+          logger.info "Select #{site} for backup"
+
+          browser.div(id: 'modalDiv').
+            div(visible_text: 'CREATE A NEW BACKUP').
+            wait_until_present
+          logger.debug 'Backup details modal window open'
+
           browser.text_field(id: 'backupName').set backup_name
-          browser.link(visible_text: 'Phoenix (Beta)').click
+          browser.link(visible_text: backup_type).click
           browser.link(visible_text: 'Backup Now').click
+          logger.info "Backup Now #{backup_name} (#{backup_type})"
         end
 
         def download_backup(site, backup_name)
@@ -217,7 +208,6 @@ module Stein
           row.click
 
           row_detailed = row.parent.parent.div(text: "#{backup_name}")
-          #puts row_detailed.parent.html
           row_detailed.parent.link(class: 'multiple_downloads').click
 
           browser.wait_until { |b|
@@ -235,20 +225,6 @@ module Stein
 
         end
 
-        def copy_live_to_staging(site)
-          browser = @_browser.b
-          site = browser.link(visible_text: site)
-          site.hover
-          copy_live_to_staging = browser.link(visible_text: 'Copy live to staging')
-          copy_live_to_staging.click
-          are_you_sure = browser.link(visible_text: 'Copy')
-          if are_you_sure.present?
-            are_you_sure.click
-
-            self.monitor_activity_log
-          end
-        end
-
         def update_all_sites
           browser = @_browser.b
           update_all = browser.link(visible_text: 'Update All Sites')
@@ -262,19 +238,9 @@ module Stein
           end
         end
 
-        def reload_data
-          # wait until the btn_reload is visible again
-          # last_reload_time = @_browser.b.div(id: 'lastReloadTime').text.to_s
-          @_browser.b.div(id: 'clearPluginCache').click
-          @_browser.b.link(id: 'reloadStats').click
-          sleep(10)
-          @_browser.b.wait_until { |b|
-            b.div(class: 'btn_reload').present?
-          }
-        end
-
         def close
           @_browser.b.close
+          logger.debug 'Browser closed'
         end
 
       end
