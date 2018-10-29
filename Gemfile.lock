@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    stein (0.1.19)
+    stein (0.1.20)
       dotenv
       watir
       watir-scroll

@@ -102,13 +102,14 @@ module Stein
           browser = @_browser.b
           sites = []
           browser.goto @_infinitewp_url
-          is_empty = browser.div(id: 'siteViewUpdateContent').
-            div(class: 'empty_data_set').
-            present?
-          logger.debug "Are there sites that require updates? #{is_empty}"
-          if is_empty != false
+          updates_required = browser.div(id: 'siteViewUpdateContent').
+            divs(class: 'rows_cont').count > 0
+          logger.debug "There are site updates required: #{updates_required}"
+          #logger.debug "Do sites require updates? #{is_empty}"
+          if updates_required == true
             for row in browser.div(id: 'siteViewUpdateContent').
               div(class: 'rows_cont').divs(class: 'ind_row_cont')
+
               site = row.div(class: 'row_name').text
               sites << site
               logger.info "Added #{site} to list of sites that require updates"
