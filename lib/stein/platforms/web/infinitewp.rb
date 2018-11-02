@@ -127,14 +127,15 @@ module Stein
         def update_all_by_site(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
-          site = browser.div(id: 'siteViewUpdateContent').
+          site_row = browser.div(id: 'siteViewUpdateContent').
                     div(class: 'row_name',
                     visible_text: site)
-          if site.present?
-            row = site.parent
+          logger.debug "Found site to update #{site}? #{site_row.present?}"
+          if site_row.present?
+            row = site_row.parent
             row.link(class: 'update_all_group').click
             browser.div(class: 'dialog_cont').wait_until_present
-            browser.link(visible_text: 'Yes! Go ahead.').click
+            #browser.link(visible_text: 'Yes! Go ahead.').click
             logger.info "Started Update All (#{site})"
             self.monitor_activity_log
           end
@@ -183,21 +184,23 @@ module Stein
 
           browser = @_browser.b
           browser.link(visible_text: 'Create New Backup').click
-          browser.div(id: 'modalDiv').wait_until_present
+
+          modal_div = browser.div(id: 'modalDiv')
+          modal_div.wait_until_present
           logger.debug 'Backup modal window open'
 
-          browser.div(id: 'modalDiv').link(visible_text: site).click
+          modal_div.link(visible_text: site).click
           browser.div(id: 'enterBackupDetails').click
           logger.info "Select #{site} for backup"
 
-          browser.div(id: 'modalDiv').
+          modal_div.
             div(visible_text: 'CREATE A NEW BACKUP').
             wait_until_present
           logger.debug 'Backup details modal window open'
 
-          browser.text_field(id: 'backupName').set backup_name
-          browser.link(visible_text: backup_type).click
-          browser.link(visible_text: 'Backup Now').click
+          modal_div.text_field(id: 'backupName').set backup_name
+          modal_div.link(visible_text: backup_type).click
+          modal_div.link(visible_text: 'Backup Now').click
           logger.info "Backup Now #{backup_name} (#{backup_type})"
         end
 
