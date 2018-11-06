@@ -27,5 +27,5 @@ Stein::Application.instance
 load options[:robot_file]
 
 # run the exec within the instance
-eval "#{Stein::Runner.descendants.first}.instance.exec"
+eval "#{Stein::Runner.descendants.first}.instance.loader"
 

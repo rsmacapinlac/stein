@@ -10,8 +10,15 @@ module Stein
   class Application
     include Singleton
 
-    def initialize
+    def initialize(*)
+      set_environment
       # maybe dynamically load libraries?
+    end
+
+    private
+
+    def set_environment
+      ENV["STEIN_ENV"] = 'development'
     end
   end
 end

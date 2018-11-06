@@ -9,7 +9,7 @@ module Stein
       class Browser < WebAutomator
         attr_accessor :b
 
-        def initialize(is_headless = true)
+        def initialize()
           Dotenv.load
 
           download_directory = "#{Dir.pwd}/Downloads"
@@ -23,14 +23,10 @@ module Stein
           client = Selenium::WebDriver::Remote::Http::Default.new
           client.read_timeout = 600 # seconds – default is 60
 
-          @is_headless = is_headless
-          @is_headless = (ENV['RUN_HEADLESS'].downcase == 'true') unless ENV['RUN_HEADLESS'].nil?
-          # puts "is_headless: #{@is_headless}"
-
           @b = Watir::Browser.new :firefox,
             http_client: client,
             profile: profile,
-            headless: @is_headless
+            headless: Stein::Config.instance.headless
 
           logger.debug "Initialized #{@b}, headless: #{@is_headless}"
 

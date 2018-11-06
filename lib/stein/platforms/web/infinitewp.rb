@@ -9,13 +9,15 @@ module Stein
         attr_accessor :_infinitewp_url
 
         def initialize(infinitewp_url, browser=nil)
-          # set time out for 10m
-          Watir.default_timeout = 1200
           @_infinitewp_url = infinitewp_url
 
           @_browser = browser
           @_browser = Stein::Platforms::Web::Browser.new if @_browser == nil
           logger.debug "Initialized browser #{@_browser}"
+        end
+
+        def browser
+          @_browser.b
         end
 
         def login(login, password)
@@ -144,18 +146,22 @@ module Stein
         def update_all_in_staging(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
-          row = browser.div(id: 'siteViewUpdateContent').
-            div(class: 'row_name',
-                visible_text: site).parent
-          logger.debug "Found update row (#{site})"
+          site_row = browser.div(id: 'siteViewUpdateContent').
+                    div(class: 'row_name',
+                        visible_text: site)
 
-          row.link(visible_text: 'Update All in Staging').click
-          browser.div(class: 'dialog_cont').wait_until_present
-          browser.link(id: 'groupUpdateInNewStage').click
-          logger.info "Update all in staging for #{site}"
+          logger.debug "Found site to update #{site}? #{site_row.present?}"
 
-          self.monitor_activity_log
-          self.remove_notifications
+          if site_row.present?
+            row = site_row.parent
+            row.link(visible_text: 'Update All in Staging').click
+            browser.div(class: 'dialog_cont').wait_until_present
+            browser.link(id: 'groupUpdateInNewStage').click
+            logger.info "Update all in staging for #{site}"
+
+            self.monitor_activity_log
+            self.remove_notifications
+          end
         end
 
         def monitor_activity_log
