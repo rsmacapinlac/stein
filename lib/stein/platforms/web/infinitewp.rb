@@ -104,6 +104,7 @@ module Stein
           browser = @_browser.b
           sites = []
           browser.goto @_infinitewp_url
+          browser.div(id: 'siteViewUpdateContent').wait_until_present
           updates_required = browser.div(id: 'siteViewUpdateContent').
             divs(class: 'rows_cont').count > 0
           logger.debug "There are site updates required: #{updates_required}"
@@ -129,6 +130,7 @@ module Stein
         def update_all_by_site(site)
           browser = @_browser.b
           browser.goto @_infinitewp_url
+          browser.div(id: 'siteViewUpdateContent').wait_until_present
           site_row = browser.div(id: 'siteViewUpdateContent').
                     div(class: 'row_name',
                     visible_text: site)
@@ -137,7 +139,7 @@ module Stein
             row = site_row.parent
             row.link(class: 'update_all_group').click
             browser.div(class: 'dialog_cont').wait_until_present
-            #browser.link(visible_text: 'Yes! Go ahead.').click
+            browser.link(visible_text: 'Yes! Go ahead.').click
             logger.info "Started Update All (#{site})"
             self.monitor_activity_log
           end
