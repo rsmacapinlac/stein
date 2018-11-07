@@ -21,11 +21,11 @@ end.parse!
 raise OptionParser::MissingArgument if options[:robot_file].nil?
 
 # initialize Application instance
-Stein::Application.instance
+app = Stein::Application.new
 
-# load the robot file
-load options[:robot_file]
+# Set the robot to run
+app.robot_file = options[:robot_file]
 
-# run the exec within the instance
-eval "#{Stein::Runner.descendants.first}.instance.loader"
+# Run the robot
+app.run_robot
 

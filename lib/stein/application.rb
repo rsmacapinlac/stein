@@ -1,24 +1,28 @@
-
-require 'singleton'
 require 'stein/platforms/web/browser'
 require 'stein/platforms/web/wordpress'
 require 'stein/platforms/web/infinitewp'
 require 'stein/platforms/web/clientexec'
 require 'stein/runner'
+require 'stein/logging'
+require 'stein/config'
 
 module Stein
   class Application
-    include Singleton
+    attr_accessor :robot_file
 
-    def initialize(*)
-      set_environment
-      # maybe dynamically load libraries?
+    def initialize
+      Stein::Config.instance
+    end
+
+    def run_robot
+      load_robot
+      eval("#{Stein::Runner.descendants.first}.instance.loader")
     end
 
     private
 
-    def set_environment
-      ENV["STEIN_ENV"] = 'development'
+    def load_robot
+      load @robot_file
     end
   end
 end

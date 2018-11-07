@@ -4,28 +4,28 @@ require 'stein/config'
 module Stein
   module Logging
     @@logger = nil
+    @@config = Stein::Config.instance
 
     def logger
 
       if @@logger.nil?
-        log_file = File.new Stein::Config.instance.log_filepath, 'a'
+        Dir.mkdir @@config.log_dir unless Dir.exists? @@config.log_dir
+        log_file = File.new @@config.log_filepath, 'a'
 
-        if Stein::Config.instance.what_environment?.eql?('development')
+
+        if @@config.environment.eql?('development')
           @@logger = Logger.new MultiIO.new STDOUT, log_file
         else
           @@logger = Logger.new log_file
         end
 
-        @@logger.level = Stein::Config.instance.log_level
+        @@logger.level = @@config.log_level
       end
 
       return @@logger
     end
 
     private
-
-    def log_file_by(environment)
-    end
 
     class MultiIO
       def initialize(*targets)

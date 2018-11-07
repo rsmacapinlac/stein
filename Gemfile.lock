@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    stein (0.1.23)
+    stein (0.1.24)
       dotenv
       watir
       watir-scroll
@@ -73,4 +73,4 @@ DEPENDENCIES
   stein!
 
 BUNDLED WITH
-   1.16.6
+   1.17.1
