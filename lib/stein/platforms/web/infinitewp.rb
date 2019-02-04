@@ -36,12 +36,6 @@ module Stein
           logger.info 'Logged out'
         end
 
-        def has_updates?
-          browser = @_browser.b
-          update_all = browser.link(visible_text: 'Update All Sites')
-          update_all.exists?
-        end
-
         def hide_sites_menu
           browser = @_browser.b
           browser.div(class: 'showFooterSelector').click
