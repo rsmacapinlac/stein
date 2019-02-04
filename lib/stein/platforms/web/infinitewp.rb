@@ -3,16 +3,17 @@ require 'stein/platforms/web/web_automator'
 module Stein
   module Platforms
     module Web
+      # Responsible for automating interactions with InfiniteWP
       class InfiniteWP < WebAutomator
 
         attr_accessor :_browser
         attr_accessor :_infinitewp_url
 
-        def initialize(infinitewp_url, browser=nil)
+        def initialize(infinitewp_url, browser = nil)
           @_infinitewp_url = infinitewp_url
 
           @_browser = browser
-          @_browser = Stein::Platforms::Web::Browser.new if @_browser == nil
+          @_browser = Stein::Platforms::Web::Browser.new if @_browser.nil?
           logger.debug "Initialized browser #{@_browser}"
         end
 
@@ -24,21 +25,21 @@ module Stein
           infinite_url_login = "#{@_infinitewp_url}/login.php"
           @_browser.b.goto infinite_url_login
           logger.info "Opened InfiniteWP at #{infinite_url_login}"
-          @_browser.b.text_field(name:'email').set login
-          @_browser.b.text_field(name:'password').set password
-          @_browser.b.button(text:'Log in').click
+          @_browser.b.text_field(name: 'email').set login
+          @_browser.b.text_field(name: 'password').set password
+          @_browser.b.button(text: 'Log in').click
           logger.info "Logged in with #{login}"
         end
 
         def logout
           @_browser.b.goto "#{@_infinitewp_url}/login.php?logout=now"
-          logger.info "Logged out"
+          logger.info 'Logged out'
         end
 
         def has_updates?
           browser = @_browser.b
           update_all = browser.link(visible_text: 'Update All Sites')
-          return update_all.exists?
+          update_all.exists?
         end
 
         def hide_sites_menu
@@ -49,15 +50,15 @@ module Stein
           logger.debug "Sites menu was found? #{sites_menu_found}"
           if sites_menu_found == true
             browser.div(class: 'showFooterSelector').click
-            logger.info "Sites menu was clicked to hide"
+            logger.info 'Sites menu was clicked to hide'
           end
         end
 
         def open_site_selector(main_menu_item, sub_menu_item,
-                               confirm_element = { class: 'siteSelectorContainer' })
+                               confirm_element = {class: 'siteSelectorContainer'})
           browser = @_browser.b
-          self.hide_sites_menu
-          browser.link(visible_text: main_menu_item).hover
+          hide_sites_menu
+          browser.link(visible_text: main_menu_item).click
           browser.link(visible_text: sub_menu_item).click
           browser.div(confirm_element).wait_until_present
           logger.debug "#{confirm_element} found"
@@ -188,7 +189,7 @@ module Stein
         end
 
         def create_backup(site, backup_name, backup_type = 'Phoenix (Beta)')
-          self.open_site_selector('Protect', 'Backups', {id: 'backupPageMainCont'})
+          open_site_selector('Protect', 'Backups', {id: 'backupPageMainCont'})
 
           browser = @_browser.b
           browser.link(visible_text: 'Create New Backup').click
