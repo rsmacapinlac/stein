@@ -60,33 +60,34 @@ module Stein
 
         def remove_notifications
           browser = @_browser.b
-          for notification in browser.divs(class: 'notification')
+          notifications = browser.divs(class: 'notification')
+          notifications.each do |notification|
+            logger.debug "Removing notification #{notification}"
             notification.div(class: 'n_close').click
-            logger.debug "Removed notification #{notification}"
           end
         end
 
         def malware_scan(site)
           browser = @_browser.b
-          self.open_site_selector('Protect', 'Malware Scan')
+          open_site_selector('Protect', 'Malware Scan')
 
           browser.div(class: 'bywebsites').link(visible_text: site).click
           browser.link(id: 'scanSucuri').click
           logger.info "Start malware (sucuri) scan (#{site})"
 
-          self.monitor_activity_log
+          monitor_activity_log
         end
 
         def wordfence_scan(site)
           browser = @_browser.b
-          self.open_site_selector('Protect', 'Wordfence')
+          open_site_selector('Protect', 'Wordfence')
 
           browser.div(class: 'bywebsites').link(visible_text: site).click
           browser.link(id: 'scanWordfence').click
           logger.info "Start wordfence scan (#{site})"
 
-          self.monitor_activity_log
-          self.remove_notifications
+          monitor_activity_log
+          remove_notifications
         end
 
         def has_updates?
