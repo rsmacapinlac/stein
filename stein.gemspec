@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Ritchie Macapinlac"]
   spec.email         = ["ritchie@macapinlac.com"]
 
-  spec.summary       = %q{Write a short summary, because RubyGems requires one.}
+  spec.summary       = %q{This is an automation gem for specific web platforms.}
   spec.description   = %q{Write a longer description or delete this line.}
   spec.homepage      = "http://www.macapinlac.com"
   spec.license       = "MIT"
@@ -23,13 +23,11 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency 'watir'
-  spec.add_dependency 'watir-scroll'
-  spec.add_dependency 'webdrivers'
-  spec.add_dependency "dotenv"
+  spec.add_dependency 'selenium-webdriver'
+  spec.add_dependency 'dotenv'
 
   spec.add_development_dependency "rubocop"
-  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
 end

@@ -1,11 +1,9 @@
 PATH
   remote: .
   specs:
-    stein (0.1.24)
+    stein (0.1.27)
       dotenv
-      watir
-      watir-scroll
-      webdrivers
+      selenium-webdriver
 
 GEM
   remote: https://rubygems.org/
@@ -14,12 +12,9 @@ GEM
     childprocess (0.9.0)
       ffi (~> 1.0, >= 1.0.11)
     diff-lcs (1.3)
-    dotenv (2.5.0)
-    ffi (1.9.25)
+    dotenv (2.6.0)
+    ffi (1.10.0)
     jaro_winkler (1.5.1)
-    mini_portile2 (2.3.0)
-    nokogiri (1.8.5)
-      mini_portile2 (~> 2.3.0)
     parallel (1.12.1)
     parser (2.5.3.0)
       ast (~> 2.4.0)
@@ -53,24 +48,16 @@ GEM
       childprocess (~> 0.5)
       rubyzip (~> 1.2, >= 1.2.2)
     unicode-display_width (1.4.0)
-    watir (6.14.0)
-      selenium-webdriver (~> 3.4, >= 3.4.1)
-    watir-scroll (0.4.0)
-      watir (>= 6.0)
-    webdrivers (3.4.3)
-      nokogiri (~> 1.6)
-      rubyzip (~> 1.0)
-      selenium-webdriver (~> 3.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.16)
+  bundler
   rake (~> 10.0)
   rspec (~> 3.0)
   rubocop
   stein!
 
 BUNDLED WITH
-   1.17.1
+   2.0.1

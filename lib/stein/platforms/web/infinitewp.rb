@@ -9,243 +9,138 @@ module Stein
         attr_accessor :_browser
         attr_accessor :_infinitewp_url
 
-        def initialize(infinitewp_url, browser = nil)
+        def initialize(infinitewp_url)
           @_infinitewp_url = infinitewp_url
 
-          @_browser = browser
           @_browser = Stein::Platforms::Web::Browser.new if @_browser.nil?
-          logger.debug "Initialized browser #{@_browser}"
+          @_browser.resize_to(1024, 800)
+          logger.debug "Initialized browser #{@_browser} #{@_browser.b.manage.window.size}"
         end
 
         def browser
-          @_browser.b
+          @_browser
         end
 
         def login(login, password)
           infinite_url_login = "#{@_infinitewp_url}/login.php"
-          @_browser.b.goto infinite_url_login
+          browser.goto infinite_url_login
           logger.info "Opened InfiniteWP at #{infinite_url_login}"
-          @_browser.b.text_field(name: 'email').set login
-          @_browser.b.text_field(name: 'password').set password
-          @_browser.b.button(text: 'Log in').click
+
+          browser.text_field('email').send_keys login
+          browser.text_field('password').send_keys password
+          browser.get_element_by_id('loginSubmitBtn').click
           logger.info "Logged in with #{login}"
         end
 
         def logout
-          @_browser.b.goto "#{@_infinitewp_url}/login.php?logout=now"
+          browser.goto "#{@_infinitewp_url}/login.php?logout=now"
           logger.info 'Logged out'
         end
 
+        # Ensure that the sites menu is hidden, if it is already hidden then it
+        # doesnt do anything.
         def hide_sites_menu
-          browser = @_browser.b
-          browser.div(class: 'showFooterSelector').click
-          sites_menu = browser.div(id: 'bottom_sites_cont')
-          sites_menu_found = sites_menu.present?
-          logger.debug "Sites menu was found? #{sites_menu_found}"
-          if sites_menu_found == true
-            browser.div(class: 'showFooterSelector').click
-            logger.info 'Sites menu was clicked to hide'
+          bottom_sites_showing = browser.get_element_by_id('bottom_sites_cont').
+            displayed?
+          if bottom_sites_showing
+            browser.get_element_by_class('showFooterSelector').click
           end
         end
 
-        def open_site_selector(main_menu_item, sub_menu_item,
-                               confirm_element = {class: 'siteSelectorContainer'})
-          browser = @_browser.b
+        # Use the main menu to navigate IWP
+        def select_menu(main_menu_item, sub_menu_item)
+
+          logger.info("Opening menu: #{main_menu_item} > #{sub_menu_item}")
           hide_sites_menu
-          browser.link(visible_text: main_menu_item).click
-          browser.link(visible_text: sub_menu_item).click
-          browser.div(confirm_element).wait_until_present
-          logger.debug "#{confirm_element} found"
-        end
 
-        def remove_notifications
-          browser = @_browser.b
-          notifications = browser.divs(class: 'notification')
-          notifications.each do |notification|
-            logger.debug "Removing notification #{notification}"
-            notification.div(class: 'n_close').click
+          menu_item = browser.get_element_by_text(main_menu_item)
+          browser.b.action.move_to(menu_item).perform
+          sub_items = menu_item.find_element(xpath: './..').
+            find_element(tag_name: 'ul').
+            find_elements(tag_name: 'li')
+
+          sub_items.each do |sub_item|
+            if sub_item.find_element(tag_name: 'a').text == sub_menu_item
+              sub_item.click
+            end
           end
+
+          sleep(1)
         end
 
         def malware_scan(site)
-          browser = @_browser.b
           open_site_selector('Protect', 'Malware Scan')
 
-          browser.div(class: 'bywebsites').link(visible_text: site).click
-          browser.link(id: 'scanSucuri').click
-          logger.info "Start malware (sucuri) scan (#{site})"
+          scan_modal = browser.wait.until do
+            browser.get_element_by_class('siteSelectorContainer')
+          end
+          logger.info "Malware site selector open? #{scan_modal.displayed?}"
 
-          monitor_activity_log
+          scan_modal.find_element(link_text: site).click
+          browser.get_element_by_id('scanSucuri').click
+
         end
 
         def wordfence_scan(site)
-          browser = @_browser.b
           open_site_selector('Protect', 'Wordfence')
 
-          browser.div(class: 'bywebsites').link(visible_text: site).click
-          browser.link(id: 'scanWordfence').click
-          logger.info "Start wordfence scan (#{site})"
+          scan_modal = browser.wait.until do
+            browser.get_element_by_class('siteSelectorContainer')
+          end
+          logger.info "Wordfence scan site selector open? #{scan_modal.displayed?}"
 
-          monitor_activity_log
-          remove_notifications
+          scan_modal.find_element(link_text: site).click
+          browser.get_element_by_id('scanWordfence').click
         end
 
-        def has_updates?
-          browser = @_browser.b
-          browser.div(id: 'siteViewUpdateContent').
-            div(class: 'rows_cont').present?
+        def create_new_backup
+          button = browser.wait.until do
+            browser.b.find_element(id: 'restrictToggleCreateBackup')
+          end
+          browser.b.action.move_to(button).click(button).perform
         end
 
-        def which_sites_have_updates
-          browser = @_browser.b
-          sites = []
-          browser.goto @_infinitewp_url
-          browser.div(id: 'siteViewUpdateContent').wait_until_present
-          updates_required = browser.div(id: 'siteViewUpdateContent').
-            divs(class: 'rows_cont').count > 0
-          logger.debug "There are site updates required: #{updates_required}"
-          #logger.debug "Do sites require updates? #{is_empty}"
-          if updates_required == true
-            for row in browser.div(id: 'siteViewUpdateContent').
-              div(class: 'rows_cont').divs(class: 'ind_row_cont')
-
-              site = row.div(class: 'row_name').text
-              sites << site
-              logger.info "Added #{site} to list of sites that require updates"
+        def select_site_in_modal(site)
+          modal = browser.wait.until do
+            test = browser.b.find_elements(class: 'dialog_cont')
+            if test.count == 0
+              sites_dialog = browser.get_element_by_class('website_items_cont')
+            else
+              sites_dialog = test.first
             end
+            sites_dialog
           end
+          logger.info "Modal window open? #{modal.displayed?}"
 
-          return sites
+          modal.find_element(link_text: site).click
+          logger.info "Site selected: #{site}"
         end
 
-        def select_site(site)
-          browser = @_browser.b
-          browser.div(id: 'bottom_sites_cont').link(visible_text: site).hover
+        def click_backup_details
+          enter_details = browser.b.find_element(id: 'enterBackupDetails')
+          browser.b.action.move_to(enter_details).click(enter_details).perform
         end
 
-        def update_all_by_site(site)
-          browser = @_browser.b
-          browser.goto @_infinitewp_url
-          browser.div(id: 'siteViewUpdateContent').wait_until_present
-          site_row = browser.div(id: 'siteViewUpdateContent').
-                    div(class: 'row_name',
-                    visible_text: site)
-          logger.debug "Found site to update #{site}? #{site_row.present?}"
-          if site_row.present?
-            row = site_row.parent
-            row.link(class: 'update_all_group').click
-            browser.div(class: 'dialog_cont').wait_until_present
-            browser.link(visible_text: 'Yes! Go ahead.').click
-            logger.info "Started Update All (#{site})"
-            self.monitor_activity_log
+        def add_backup_details(backup_name, backup_type = 'Phoenix (Beta)')
+          bu_name = browser.wait.until do
+            browser.b.find_element(id: 'backupName')
           end
+          bu_name.send_keys backup_name
+
+          bu_type = browser.b.find_element(link_text: backup_type)
+          browser.b.action.move_to(bu_type).click(bu_type).perform
         end
 
-        def update_all_in_staging(site)
-          browser = @_browser.b
-          browser.goto @_infinitewp_url
-          site_row = browser.div(id: 'siteViewUpdateContent').
-                    div(class: 'row_name',
-                        visible_text: site)
-
-          logger.debug "Found site to update #{site}? #{site_row.present?}"
-
-          if site_row.present?
-            row = site_row.parent
-            row.link(visible_text: 'Update All in Staging').click
-            browser.div(class: 'dialog_cont').wait_until_present
-            browser.link(id: 'groupUpdateInNewStage').click
-            logger.info "Update all in staging for #{site}"
-
-            self.monitor_activity_log
-            self.remove_notifications
-          end
+        def start_backup
+          start_action('backupNow', 'Backup')
         end
 
-        def monitor_activity_log
-          logger.debug "Monitoring activity log"
-          browser = @_browser.b
-          browser.link(visible_text: 'Activity Log').click
-
-          browser.div(class: 'history').wait_until_present
-
-          keep_checking = true
-          while keep_checking == true do
-            browser.span(class: 'refreshData').click
-            in_progress_divs = browser.div(id: 'historyPageContent').
-              divs(class: 'in_progress')
-            in_progress_divs.count
-            keep_checking = in_progress_divs.count != 0
-            logger.debug "Will continue to check? #{keep_checking}  #{in_progress_divs.count}"
-            logger.info "Log items in progress #{in_progress_divs.count}"
-            sleep(10)
-          end
-          logger.info "Activities in activity log are all completed"
+        def start_wordfence_scan
+          start_action('scanWordfence', 'Wordfence Scan')
         end
 
-        def create_backup(site, backup_name, backup_type = 'Phoenix (Beta)')
-          open_site_selector('Protect', 'Backups', {id: 'backupPageMainCont'})
-
-          browser = @_browser.b
-          browser.link(visible_text: 'Create New Backup').click
-
-          modal_div = browser.div(id: 'modalDiv')
-          modal_div.wait_until_present
-          logger.debug 'Backup modal window open'
-
-          modal_div.link(visible_text: site).click
-          browser.div(id: 'enterBackupDetails').click
-          logger.info "Select #{site} for backup"
-
-          modal_div.
-            div(visible_text: 'CREATE A NEW BACKUP').
-            wait_until_present
-          logger.debug 'Backup details modal window open'
-
-          modal_div.text_field(id: 'backupName').set backup_name
-          modal_div.link(visible_text: backup_type).click
-          modal_div.link(visible_text: 'Backup Now').click
-          logger.info "Backup Now #{backup_name} (#{backup_type})"
-        end
-
-        def download_backup(site, backup_name)
-          self.open_backup
-
-          browser = @_browser.b
-          browser.text_field(class: ['input_type_filter', 'searchItems']).set site
-          row = browser.div(id: 'backupList').
-            div(class: 'row_name', visible_text: site)
-          row.click
-
-          row_detailed = row.parent.parent.div(text: "#{backup_name}")
-          row_detailed.parent.link(class: 'multiple_downloads').click
-
-          browser.wait_until { |b|
-            b.div(class: 'dialog_cont').
-              div(visible_text: 'DOWNLOAD BACKUP PART FILES').present?
-          }
-
-          for link in browser.links(class: 'part_download')
-            unless link.href.include? "tmp"
-              link.click
-            end
-          end
-
-          browser.send_keys :escape
-
-        end
-
-        def update_all_sites
-          browser = @_browser.b
-          update_all = browser.link(visible_text: 'Update All Sites')
-          if (self.has_updates?)
-            update_all.click
-            confirm = browser.link(visible_text: 'Yes! Go ahead.')
-            if (confirm.exists?)
-              confirm.click
-              self.reload_data
-            end
-          end
+        def start_malware_scan
+          start_action('scanSucuri', 'Malware Scan')
         end
 
         def close
@@ -253,6 +148,13 @@ module Stein
           logger.debug 'Browser closed'
         end
 
+        private
+
+        def start_action(id, name)
+          startbtn = browser.b.find_element(id: id)
+          browser.b.action.move_to(startbtn).click(startbtn).perform
+          logger.info "Start action #{name} (id: #{id})"
+        end
       end
     end
   end
