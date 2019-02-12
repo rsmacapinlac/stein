@@ -47,15 +47,14 @@ module Stein
 
         # Use the main menu to navigate IWP
         def select_menu(main_menu_item, sub_menu_item)
-
           logger.info("Opening menu: #{main_menu_item} > #{sub_menu_item}")
           hide_sites_menu
 
           menu_item = browser.get_element_by_text(main_menu_item)
           browser.b.action.move_to(menu_item).perform
-          sub_items = menu_item.find_element(xpath: './..').
-            find_element(tag_name: 'ul').
-            find_elements(tag_name: 'li')
+          sub_items = menu_item.find_element(xpath: './..')
+                               .find_element(tag_name: 'ul')
+                               .find_elements(tag_name: 'li')
 
           sub_items.each do |sub_item|
             if sub_item.find_element(tag_name: 'a').text == sub_menu_item
@@ -75,15 +74,14 @@ module Stein
         end
 
         def select_site_in_modal(site)
-          modal = browser.wait.until do
+          browser.wait.until do
             test = browser.b.find_elements(class: 'dialog_cont')
             if test.count.zero?
               browser.get_element_by_class('website_items_cont')
             else
               test.first
             end
-          end
-          modal.find_element(link_text: site).click
+          end.find_element(link_text: site).click
           logger.info "Site selected: #{site}"
         end
 
@@ -120,6 +118,25 @@ module Stein
         def close
           @_browser.b.close
           logger.debug 'Browser closed'
+        end
+
+        def monitor_activity_log
+          hide_sites_menu
+
+          menu_item = browser.get_element_by_text('Activity Log')
+          browser.b.action.move_to(menu_item).click(menu_item).perform
+
+          running_items = 1
+          until running_items.zero?
+            logger.info "In progress items: #{running_items}"
+            sleep(5)
+            reload_btn = browser.b.find_element(class: 'refreshData')
+            browser.b.action.move_to(reload_btn).click(reload_btn).perform
+            running_items = browser
+                            .b
+                            .find_elements(css: 'div.in_progress.row_summary')
+                            .count
+          end
         end
 
         private
