@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    stein (0.2.1)
+    stein (0.2.2)
       dotenv
       selenium-webdriver
 

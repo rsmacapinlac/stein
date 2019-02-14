@@ -50,9 +50,17 @@ module Stein
           logger.info("Opening menu: #{main_menu_item} > #{sub_menu_item}")
           hide_sites_menu
 
-          menu_item = browser.get_element_by_text(main_menu_item)
-          browser.b.action.move_to(menu_item).perform
-          sub_items = menu_item.find_element(xpath: './..')
+          menu_items = browser.b.find_elements(css: 'ul.site_nav li a')
+          mi_anchor = nil
+          menu_items.each do |menu_item|
+            if menu_item.text == main_menu_item
+              mi_anchor = menu_item
+              break
+            end
+          end
+
+          browser.b.action.move_to(mi_anchor).perform
+          sub_items = mi_anchor.find_element(xpath: './..')
                                .find_element(tag_name: 'ul')
                                .find_elements(tag_name: 'li')
 
@@ -137,6 +145,16 @@ module Stein
                             .find_elements(css: 'div.in_progress.row_summary')
                             .count
           end
+        end
+
+        # Returns an array of sites that have identified updates
+        def find_sites_with_updates
+          updates = browser.b.find_elements(css: 'div#siteViewUpdateContent div.row_summary')
+          sites = []
+          updates.each do |update|
+            sites << update.find_element(css: 'div.row_name').text
+          end
+          sites
         end
 
         private
