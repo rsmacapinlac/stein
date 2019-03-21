@@ -25,6 +25,10 @@ module Stein
           logger.debug "Initialized #{@b}, headless: #{@is_headless}"
         end
 
+        def take_screenshot(img_file)
+          @b.save_screenshot(img_file)
+        end
+
         def text_field(name)
           @b.find_element(name: name)
         end

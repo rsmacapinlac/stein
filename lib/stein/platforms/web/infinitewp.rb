@@ -128,11 +128,18 @@ module Stein
           logger.debug 'Browser closed'
         end
 
-        def monitor_activity_log
+        def open_activity_log
           hide_sites_menu
 
+          logger.info 'Opening activity log'
           menu_item = browser.get_element_by_text('Activity Log')
           browser.b.action.move_to(menu_item).click(menu_item).perform
+          sleep(2)
+        end
+
+        def monitor_activity_log
+
+          open_activity_log
 
           running_items = 1
           until running_items.zero?
