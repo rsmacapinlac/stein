@@ -17,9 +17,18 @@ module Stein
 
           args = []
           args << '-headless' if @is_headless == true
-          options = Selenium::WebDriver::Firefox::Options.new(args: args)
 
-          @b = Selenium::WebDriver.for :firefox, options: options
+          @_browser_setting = ENV['BROWSER']
+          @_browser_setting = 'chrome' if ENV['BROWSER'].nil?
+          @_browser_setting = @_browser_setting.downcase
+          if @_browser_setting.eql? 'chrome'
+            @b = Selenium::WebDriver.for :chrome
+          end
+          if @_browser_setting.eql? 'firefox'
+            options = Selenium::WebDriver::Firefox::Options.new(args: args)
+            @b = Selenium::WebDriver.for :firefox, options: options
+          end
+
           @wait = Selenium::WebDriver::Wait.new(timeout: 15)
 
           logger.debug "Initialized #{@b}, headless: #{@is_headless}"
