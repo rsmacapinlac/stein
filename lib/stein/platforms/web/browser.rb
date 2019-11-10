@@ -1,5 +1,6 @@
 require 'selenium-webdriver'
 require 'dotenv'
+require 'headless'
 require 'stein/platforms/web/web_automator'
 
 module Stein
@@ -12,11 +13,16 @@ module Stein
 
         def initialize
           Dotenv.load
+          # default to running headless
           @is_headless = ENV['IS_HEADLESS'] == 'true'
-          @is_headless = false if ENV['IS_HEADLESS'].nil?
+          @is_headless = true if ENV['IS_HEADLESS'].nil?
+
+          if @is_headless == true
+            @headless = Headless.new
+            @headless.start
+          end
 
           args = []
-          args << '-headless' if @is_headless == true
 
           @_browser_setting = ENV['BROWSER']
           @_browser_setting = 'chrome' if ENV['BROWSER'].nil?
@@ -64,6 +70,7 @@ module Stein
 
         def close
           @b.close
+          @headless.destroy
           logger.debug "#{@b} closed"
         end
       end

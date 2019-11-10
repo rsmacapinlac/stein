@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency 'selenium-webdriver'
+  spec.add_dependency 'headless'
   spec.add_dependency 'dotenv'
 
   spec.add_development_dependency "rubocop"
