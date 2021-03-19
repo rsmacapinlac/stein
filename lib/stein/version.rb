@@ -3,5 +3,5 @@
 # Module to manage the published version
 #
 module Stein
-  VERSION = '0.2.6'
+  VERSION = '0.2.7'
 end
